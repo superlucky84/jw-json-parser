@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>j-json-parser</title>
+	<link rel="stylesheet" href="./dist/normalize.css">
+	<link rel="stylesheet" href="./dist/bundle.css">
+</head>
+<body>
+	<header>
+	</header>
+	<section>
+		<textarea id="input">
+      {"ID":null,"name":"Doe","first-name":"John","age":25,"hobbies":["reading","cinema",{"sports":["volley-ball","badminton"]}],"address":{}}
+    </textarea>
+    asdf
+		<div id="split"></div>
+		<div id="root"></div>
+	</section>
+<script src="./dist/bundle.js"></script>
+<script>
+  new Parser(document.getElementById("input"));
+</script>
+</body>
+</html>
