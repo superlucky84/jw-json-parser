@@ -97,15 +97,19 @@ var Parser = exports.Parser = function () {
 
     _classCallCheck(this, Parser);
 
-    this.analisysArr = [];
+    var middleObject = null;
 
     TEXTAREA.addEventListener("keyup", function (event) {
-      _this.parse(event.target.value);
+      middleObject = _this.itemParse(event.target.value);
     });
-    this.parse(TEXTAREA.value);
+    middleObject = this.itemParse(TEXTAREA.value);
+    console.log(middleObject);
   }
 
   _createClass(Parser, [{
+    key: "print",
+    value: function print(middleObject) {}
+  }, {
     key: "trim",
     value: function trim(text) {
       text = text.replace(/(\n|\r)/g, "");
@@ -114,6 +118,10 @@ var Parser = exports.Parser = function () {
   }, {
     key: "searchMatchFlag",
     value: function searchMatchFlag(text, serarchPoint) {
+      if (!text) {
+        return;
+      }
+
       var matchFlag = null;
       if (serarchPoint === "start") {
         matchFlag = text.match(/^(\{|\[)/);
@@ -121,8 +129,7 @@ var Parser = exports.Parser = function () {
         matchFlag = text.match(/(\}|\])$/);
       }
       if (matchFlag === null) {
-        console.log('error');
-        return;
+        return null;
       }
       return matchFlag[0];
     }
@@ -144,33 +151,118 @@ var Parser = exports.Parser = function () {
       text = text.replace(/(\}|\])$/, "");
       return text;
     }
+
+    // 키와 벨류를 분리함
+
   }, {
-    key: "parse",
-    value: function parse(original) {
+    key: "separateKayValue",
+    value: function separateKayValue(item) {
+
+      var key = item.replace(/(.*?):(.*)/, "$1");
+      var value = item.replace(/(.*?):(.*)/, "$2");
+
+      var keyValueArr = item.match(/(.*?):(.*)/);
+      if (keyValueArr) {
+        return [keyValueArr[1], keyValueArr[2]];
+      }
+      return [];
+    }
+  }, {
+    key: "objectItemSplit",
+    value: function objectItemSplit(text) {
+      var splitArr = text.split(",");
+      var newsplitArr = [];
+      var serarchPoint = [];
+      var match = null;
+      var closeMatch = null;
+      splitArr.forEach(function (item) {
+        var matchStart = false;
+        if (match === null) {
+          match = item.match(/(\{|\[)/);
+          if (match) {
+            match = match[0];
+            closeMatch = match == "{" ? "}" : "]";
+            matchStart = true;
+          }
+        }
+        var matchArr = item.match(new RegExp("\\" + match, "g"));
+        var closeMatchArr = item.match(new RegExp("\\" + closeMatch, "g"));
+        // 플래그 매칭
+        if (matchArr) {
+          serarchPoint = serarchPoint.concat(matchArr);
+        }
+        if (matchStart === true || serarchPoint.length === 0) {
+          newsplitArr.push(item);
+        } else if (serarchPoint.length > 0) {
+          var newSplitLastIdx = newsplitArr.length - 1;
+          newsplitArr[newSplitLastIdx] = newsplitArr[newSplitLastIdx] + "," + item;
+        }
+        if (serarchPoint.length > 0 && closeMatchArr) {
+          serarchPoint.splice(0, closeMatchArr.length);
+          if (serarchPoint.length === 0) {
+            match = null;
+          }
+        }
+      });
+      return newsplitArr;
+    }
+  }, {
+    key: "objectParse",
+    value: function objectParse(text, analisysArr) {
       var _this2 = this;
 
+      var splitArr = this.objectItemSplit(text);
+      splitArr.forEach(function (item) {
+        var keyValue = _this2.separateKayValue(item);
+        if (keyValue.length > 0) {
+          var startMatchFlag = _this2.searchMatchFlag(keyValue[1], "start");
+          if (startMatchFlag) {
+            keyValue[1] = _this2.itemParse(keyValue[1]);
+          }
+          analisysArr.push({
+            "key": _this2.trim(keyValue[0]),
+            "value": keyValue[1]
+          });
+        }
+      });
+    }
+  }, {
+    key: "arrayParse",
+    value: function arrayParse(text, analisysArr) {
+      var _this3 = this;
+
+      var splitArr = this.objectItemSplit(text);
+      splitArr.forEach(function (item) {
+        var startMatchFlag = _this3.searchMatchFlag(item, "start");
+        if (startMatchFlag) {
+          item = _this3.itemParse(item);
+        }
+        analisysArr.push(item);
+      });
+    }
+  }, {
+    key: "itemParse",
+    value: function itemParse(original) {
+
+      var analisysArr = [];
       var text = this.trim(original);
       var startMatchFlag = this.searchMatchFlag(text, "start");
       var endMatchFlag = this.searchMatchFlag(text, "end");
-      this.analisysArr.push(startMatchFlag);
-
       if (this.compareMatchFlag(startMatchFlag, endMatchFlag)) {
-        console.log('notmatchflag');
         return;
       }
       text = this.removeMatchFlagString(text);
-      text.split(",").forEach(function (item) {
-        _this2.analisysArr.push(item);
-      });
-
-      this.analisysArr.push(endMatchFlag);
-      console.log(this.analisysArr);
+      if (startMatchFlag === "{") {
+        analisysArr.push("{");
+        this.objectParse(text, analisysArr);
+        analisysArr.push("}");
+      } else if (startMatchFlag === "[") {
+        analisysArr.push("[");
+        this.arrayParse(text, analisysArr);
+        analisysArr.push("]");
+      }
+      return analisysArr;
     }
-    /*
-    printArr() {
-    }
-    */
-
   }]);
 
   return Parser;
