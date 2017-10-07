@@ -85,6 +85,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.Parser = undefined;
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 __webpack_require__(1);
@@ -97,19 +99,17 @@ var Parser = exports.Parser = function () {
 
     _classCallCheck(this, Parser);
 
-    var middleObject = null;
+    var resultHTML = null;
+    var root = document.getElementById("root");
 
     TEXTAREA.addEventListener("keyup", function (event) {
-      middleObject = _this.itemParse(event.target.value);
-    });
-    middleObject = this.itemParse(TEXTAREA.value);
-    console.log(middleObject);
+      resultHTML = _this.itemParse(event.target.value);
+      root.innerHTML = resultHTML;
+    });resultHTML = this.itemParse(TEXTAREA.value);
+    root.innerHTML = resultHTML;
   }
 
   _createClass(Parser, [{
-    key: "print",
-    value: function print(middleObject) {}
-  }, {
     key: "trim",
     value: function trim(text) {
       text = text.replace(/(\n|\r)/g, "");
@@ -212,17 +212,20 @@ var Parser = exports.Parser = function () {
       var _this2 = this;
 
       var splitArr = this.objectItemSplit(text);
-      splitArr.forEach(function (item) {
+      splitArr.forEach(function (item, idx) {
+
         var keyValue = _this2.separateKayValue(item);
         if (keyValue.length > 0) {
-          var startMatchFlag = _this2.searchMatchFlag(keyValue[1], "start");
+          var startMatchFlag = _this2.searchMatchFlag(_this2.trim(keyValue[1]), "start");
           if (startMatchFlag) {
             keyValue[1] = _this2.itemParse(keyValue[1]);
           }
-          analisysArr.push({
-            "key": _this2.trim(keyValue[0]),
-            "value": keyValue[1]
-          });
+          var comma = idx < splitArr.length - 1 ? "," : "";
+          analisysArr.push("<li>");
+          analisysArr.push(_this2.surroundTag(_this2.trim(keyValue[0]), "property"));
+          analisysArr.push(":");
+          analisysArr.push(_this2.surroundTag(keyValue[1]) + comma);
+          analisysArr.push("</li>");
         }
       });
     }
@@ -232,18 +235,20 @@ var Parser = exports.Parser = function () {
       var _this3 = this;
 
       var splitArr = this.objectItemSplit(text);
-      splitArr.forEach(function (item) {
-        var startMatchFlag = _this3.searchMatchFlag(item, "start");
+      splitArr.forEach(function (item, idx) {
+        var startMatchFlag = _this3.searchMatchFlag(_this3.trim(item), "start");
         if (startMatchFlag) {
           item = _this3.itemParse(item);
         }
-        analisysArr.push(item);
+        var comma = idx < splitArr.length - 1 ? "," : "";
+        analisysArr.push("<li>");
+        analisysArr.push(_this3.surroundTag(item) + comma);
+        analisysArr.push("</li>");
       });
     }
   }, {
     key: "itemParse",
     value: function itemParse(original) {
-
       var analisysArr = [];
       var text = this.trim(original);
       var startMatchFlag = this.searchMatchFlag(text, "start");
@@ -253,15 +258,30 @@ var Parser = exports.Parser = function () {
       }
       text = this.removeMatchFlagString(text);
       if (startMatchFlag === "{") {
-        analisysArr.push("{");
+        analisysArr.push(this.surroundTag("{", "toggle"));
+        analisysArr.push("<ul>");
         this.objectParse(text, analisysArr);
-        analisysArr.push("}");
+        analisysArr.push("</ul>");
+        analisysArr.push(this.surroundTag("}", "toggle-end"));
       } else if (startMatchFlag === "[") {
-        analisysArr.push("[");
+        analisysArr.push(this.surroundTag("[", "toggle"));
+        analisysArr.push("<ol>");
         this.arrayParse(text, analisysArr);
-        analisysArr.push("]");
+        analisysArr.push("</ol>");
+        analisysArr.push(this.surroundTag("]", "toggle-end"));
       }
-      return analisysArr;
+      return analisysArr.join("");
+    }
+  }, {
+    key: "surroundTag",
+    value: function surroundTag(item, type) {
+      if ((typeof item === "undefined" ? "undefined" : _typeof(item)) === "object") {
+        return item;
+      }
+      if (!type) {
+        type = item.match(/^"/) ? "string" : "number";
+      }
+      return "<span class=\"" + type + "\">" + item + "</span>";
     }
   }]);
 

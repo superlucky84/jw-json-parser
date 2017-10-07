@@ -13,15 +13,33 @@ section {
   justify-contents: flex-start; }
 
 #root {
-  border: 1px solid green;
-  width: 100%; }
+  width: 100%;
+  padding: 40px;
+  font-size: 14px;
+  line-height: 1.4em; }
+  #root ul, #root ol {
+    margin: 0;
+    padding-left: 22px;
+    list-style: none; }
+  #root span.toggle, #root span.toggle-end {
+    color: #729FCF; }
+  #root span.property {
+    color: #204a87; }
+  #root span.number {
+    padding-left: 5px;
+    color: #ad7fa8; }
+  #root span.string {
+    padding-left: 5px;
+    color: #4e9a06; }
 
-textarea {
+textarea, #root {
   width: 30%;
   min-width: 500px;
   height: 100%;
   font-size: 14px;
-  padding: 40px; }
+  padding: 40px;
+  border: 1px solid #ccc;
+  outline: none; }
 
 header {
   height: 40px; }

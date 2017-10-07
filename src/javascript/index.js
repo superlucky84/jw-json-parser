@@ -4,16 +4,14 @@ import '../css/app.sass'
 export class Parser {
   constructor(TEXTAREA) {
 
-    let middleObject = null;
+    let resultHTML = null;
+    let root = document.getElementById("root");
 
     TEXTAREA.addEventListener("keyup", (event) => {
-      middleObject = this.itemParse(event.target.value);
-    });
-    middleObject = this.itemParse(TEXTAREA.value);
-    console.log(middleObject);
-  }
-
-  print(middleObject) {
+      resultHTML = this.itemParse(event.target.value);
+      root.innerHTML = resultHTML;
+    }); resultHTML = this.itemParse(TEXTAREA.value);
+    root.innerHTML = resultHTML;
   }
 
   trim(text) {
@@ -106,33 +104,38 @@ export class Parser {
 
   objectParse(text, analisysArr) {
     let splitArr = this.objectItemSplit(text);
-    splitArr.forEach((item) => {
+    splitArr.forEach((item, idx) => {
+      
       let keyValue = this.separateKayValue(item);
       if (keyValue.length > 0) {
-        let startMatchFlag = this.searchMatchFlag(keyValue[1], "start");
+        let startMatchFlag = this.searchMatchFlag(this.trim(keyValue[1]), "start");
         if (startMatchFlag) {
           keyValue[1] = this.itemParse(keyValue[1]);
         }
-        analisysArr.push({
-          "key": this.trim(keyValue[0]),
-          "value": keyValue[1]
-        });
+        let comma = (idx < splitArr.length - 1) ? "," : "";
+        analisysArr.push("<li>");
+        analisysArr.push(this.surroundTag(this.trim(keyValue[0]), "property"));
+        analisysArr.push(":");
+        analisysArr.push(this.surroundTag(keyValue[1]) + comma);
+        analisysArr.push("</li>");
       }
     });
   }
   arrayParse(text, analisysArr) {
     let splitArr = this.objectItemSplit(text);
-    splitArr.forEach((item) => {
-      let startMatchFlag = this.searchMatchFlag(item, "start");
+    splitArr.forEach((item, idx) => {
+      let startMatchFlag = this.searchMatchFlag(this.trim(item), "start");
       if (startMatchFlag) {
         item = this.itemParse(item);
       }
-      analisysArr.push(item);
+      let comma = (idx < splitArr.length - 1) ? "," : "";
+      analisysArr.push("<li>");
+      analisysArr.push(this.surroundTag(item) + comma);
+      analisysArr.push("</li>");
     });
   }
 
   itemParse(original) {
-    
     let analisysArr = [];
     let text = this.trim(original);
     let startMatchFlag = this.searchMatchFlag(text, "start");
@@ -142,16 +145,30 @@ export class Parser {
     }
     text = this.removeMatchFlagString(text);
     if (startMatchFlag === "{") {
-      analisysArr.push("{");
+      analisysArr.push(this.surroundTag("{", "toggle"));
+      analisysArr.push("<ul>");
       this.objectParse(text, analisysArr);
-      analisysArr.push("}");
+      analisysArr.push("</ul>");
+      analisysArr.push(this.surroundTag("}", "toggle-end"));
     }
     else if (startMatchFlag === "[") {
-      analisysArr.push("[");
+      analisysArr.push(this.surroundTag("[", "toggle"));
+      analisysArr.push("<ol>");
       this.arrayParse(text, analisysArr);
-      analisysArr.push("]");
+      analisysArr.push("</ol>");
+      analisysArr.push(this.surroundTag("]", "toggle-end"));
     }
-    return analisysArr;
+    return analisysArr.join("");
+  }
+
+  surroundTag(item, type) {
+    if (typeof item === "object") {
+      return item;
+    }
+    if (!type) {
+      type = (item.match(/^"/)) ? "string" : "number";
+    }
+    return `<span class="${type}">${item}</span>`;
   }
 }
 
