@@ -1,17 +1,37 @@
 
 import '../css/app.sass'
+import $ from 'jquery'
 
 export class Parser {
   constructor(TEXTAREA) {
 
     let resultHTML = null;
-    let root = document.getElementById("root");
+    let $root = $("#root");
 
     TEXTAREA.addEventListener("keyup", (event) => {
       resultHTML = this.itemParse(event.target.value);
-      root.innerHTML = resultHTML;
-    }); resultHTML = this.itemParse(TEXTAREA.value);
-    root.innerHTML = resultHTML;
+      $root.html((resultHTML) ? resultHTML : "Invalid JSON");
+      
+      
+    }); 
+    resultHTML = this.itemParse(TEXTAREA.value);
+    $root.html((resultHTML) ? resultHTML : "Invalid JSON");
+
+    $root.bind('click', (event) => {
+      let target = event.target;
+      if ($(target).hasClass("toggle") === false && $(target).hasClass("toggle-end") === false ) {
+        return;
+      }
+      if ($(target).parent("span, div").hasClass("hide")) {
+        $(target).parent("span, div").removeClass("hide");
+      }
+      else {
+        $(target).parent("span, div").addClass("hide");
+      }
+    });
+
+
+
   }
 
   trim(text) {
@@ -120,6 +140,7 @@ export class Parser {
         analisysArr.push("</li>");
       }
     });
+    return splitArr.length;
   }
   arrayParse(text, analisysArr) {
     let splitArr = this.objectItemSplit(text);
@@ -133,6 +154,7 @@ export class Parser {
       analisysArr.push(this.surroundTag(item) + comma);
       analisysArr.push("</li>");
     });
+    return splitArr.length;
   }
 
   itemParse(original) {
@@ -147,28 +169,33 @@ export class Parser {
     if (startMatchFlag === "{") {
       analisysArr.push(this.surroundTag("{", "toggle"));
       analisysArr.push("<ul>");
-      this.objectParse(text, analisysArr);
+      let objectLength = this.objectParse(text, analisysArr);
       analisysArr.push("</ul>");
-      analisysArr.push(this.surroundTag("}", "toggle-end"));
+      analisysArr.push(this.surroundTag("}", "toggle-end", objectLength));
     }
     else if (startMatchFlag === "[") {
       analisysArr.push(this.surroundTag("[", "toggle"));
       analisysArr.push("<ol>");
-      this.arrayParse(text, analisysArr);
+      let arrayLength = this.arrayParse(text, analisysArr);
       analisysArr.push("</ol>");
-      analisysArr.push(this.surroundTag("]", "toggle-end"));
+      analisysArr.push(this.surroundTag("]", "toggle-end", arrayLength));
     }
     return analisysArr.join("");
   }
 
-  surroundTag(item, type) {
+  surroundTag(item, type, count) {
+    if (count) {
+      count = `count="${count}"`;
+    } else {
+      count = "";
+    }
     if (typeof item === "object") {
       return item;
     }
     if (!type) {
       type = (item.match(/^"/)) ? "string" : "number";
     }
-    return `<span class="${type}">${item}</span>`;
+    return `<span class="${type}" ${count}>${item}</span>`;
   }
 }
 
