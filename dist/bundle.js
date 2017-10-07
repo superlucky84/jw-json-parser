@@ -161,6 +161,9 @@ var Parser = exports.Parser = function () {
   }, {
     key: 'removeMatchFlagString',
     value: function removeMatchFlagString(text) {
+
+      if (!text) return;
+
       text = text.replace(/^(\{|\[)/, "");
       text = text.replace(/(\}|\])$/, "");
       return text;
@@ -205,7 +208,7 @@ var Parser = exports.Parser = function () {
         if (matchArr) {
           serarchPoint = serarchPoint.concat(matchArr);
         }
-        if (matchStart === true || serarchPoint.length === 0) {
+        if ((matchStart === true || serarchPoint.length === 0) && item) {
           newsplitArr.push(item);
         } else if (serarchPoint.length > 0) {
           var newSplitLastIdx = newsplitArr.length - 1;
@@ -291,7 +294,7 @@ var Parser = exports.Parser = function () {
   }, {
     key: 'surroundTag',
     value: function surroundTag(item, type, count) {
-      if (count) {
+      if (count !== undefined) {
         count = 'count="' + count + '"';
       } else {
         count = "";
@@ -313,6 +316,9 @@ var Parser = exports.Parser = function () {
     key: 'encodeSplitCharactor',
     value: function encodeSplitCharactor(tvalue) {
       var tvalueArr = tvalue.match(/(\")([^"]*?)(\")/g);
+      if (!tvalueArr) {
+        return tvalue;
+      }
       tvalueArr.forEach(function (sItem) {
         tvalue = tvalue.replace(sItem, sItem.replace(/,/g, "ឦ"));
       });
@@ -326,6 +332,7 @@ var Parser = exports.Parser = function () {
   }, {
     key: 'trim',
     value: function trim(text) {
+      if (!text) return;
       text = text.replace(/(\n|\r)/g, "");
       return text.replace(/(^\s*|\s*$)/g, "");
     }
