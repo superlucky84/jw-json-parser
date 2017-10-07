@@ -109,10 +109,11 @@ var Parser = exports.Parser = function () {
     var $root = (0, _jquery2.default)("#root");
 
     TEXTAREA.addEventListener("keyup", function (event) {
-      resultHTML = _this.itemParse(event.target.value);
+      resultHTML = _this.itemParse(_this.encodeSplitCharactor(event.target.value));
       $root.html(resultHTML ? resultHTML : "Invalid JSON");
     });
-    resultHTML = this.itemParse(TEXTAREA.value);
+
+    resultHTML = this.itemParse(this.encodeSplitCharactor(TEXTAREA.value));
     $root.html(resultHTML ? resultHTML : "Invalid JSON");
 
     $root.bind('click', function (event) {
@@ -129,12 +130,6 @@ var Parser = exports.Parser = function () {
   }
 
   _createClass(Parser, [{
-    key: 'trim',
-    value: function trim(text) {
-      text = text.replace(/(\n|\r)/g, "");
-      return text.replace(/(^\s*|\s*$)/g, "");
-    }
-  }, {
     key: 'searchMatchFlag',
     value: function searchMatchFlag(text, serarchPoint) {
       if (!text) {
@@ -305,9 +300,34 @@ var Parser = exports.Parser = function () {
         return item;
       }
       if (!type) {
-        type = item.match(/^"/) ? "string" : "number";
+        type = item.match(/^"|^'/) ? "string" : "number";
       }
+
+      if (type === "string" || type === "property") {
+        item = this.decodeSplitCharactor(item);
+      }
+
       return '<span class="' + type + '" ' + count + '>' + item + '</span>';
+    }
+  }, {
+    key: 'encodeSplitCharactor',
+    value: function encodeSplitCharactor(tvalue) {
+      var tvalueArr = tvalue.match(/(\")([^"]*?)(\")/g);
+      tvalueArr.forEach(function (sItem) {
+        tvalue = tvalue.replace(sItem, sItem.replace(/,/g, "ឦ"));
+      });
+      return tvalue;
+    }
+  }, {
+    key: 'decodeSplitCharactor',
+    value: function decodeSplitCharactor(tvalue) {
+      return tvalue.replace(/ឦ/g, ",");
+    }
+  }, {
+    key: 'trim',
+    value: function trim(text) {
+      text = text.replace(/(\n|\r)/g, "");
+      return text.replace(/(^\s*|\s*$)/g, "");
     }
   }]);
 

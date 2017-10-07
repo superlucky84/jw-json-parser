@@ -9,12 +9,11 @@ export class Parser {
     let $root = $("#root");
 
     TEXTAREA.addEventListener("keyup", (event) => {
-      resultHTML = this.itemParse(event.target.value);
+      resultHTML = this.itemParse(this.encodeSplitCharactor(event.target.value));
       $root.html((resultHTML) ? resultHTML : "Invalid JSON");
-      
-      
     }); 
-    resultHTML = this.itemParse(TEXTAREA.value);
+
+    resultHTML = this.itemParse(this.encodeSplitCharactor(TEXTAREA.value));
     $root.html((resultHTML) ? resultHTML : "Invalid JSON");
 
     $root.bind('click', (event) => {
@@ -29,16 +28,7 @@ export class Parser {
         $(target).parent("span, div").addClass("hide");
       }
     });
-
-
-
   }
-
-  trim(text) {
-    text = text.replace(/(\n|\r)/g,"");
-    return text.replace(/(^\s*|\s*$)/g,"");
-  }
-
   searchMatchFlag(text, serarchPoint) {
     if (!text) {
       return;
@@ -142,6 +132,7 @@ export class Parser {
     });
     return splitArr.length;
   }
+
   arrayParse(text, analisysArr) {
     let splitArr = this.objectItemSplit(text);
     splitArr.forEach((item, idx) => {
@@ -193,9 +184,31 @@ export class Parser {
       return item;
     }
     if (!type) {
-      type = (item.match(/^"/)) ? "string" : "number";
+      type = (item.match(/^"|^'/)) ? "string" : "number";
     }
+
+    if (type === "string" || type === "property") {
+      item = this.decodeSplitCharactor(item);
+    }
+
     return `<span class="${type}" ${count}>${item}</span>`;
+  }
+
+  encodeSplitCharactor(tvalue) {
+    let tvalueArr = tvalue.match(/(\")([^"]*?)(\")/g);
+    tvalueArr.forEach((sItem) => {
+      tvalue = tvalue.replace(sItem, sItem.replace(/,/g,"ឦ"));
+    });
+    return tvalue;
+  }
+
+  decodeSplitCharactor(tvalue) {
+    return tvalue.replace(/ឦ/g,",");
+  }
+
+  trim(text) {
+    text = text.replace(/(\n|\r)/g,"");
+    return text.replace(/(^\s*|\s*$)/g,"");
   }
 }
 
