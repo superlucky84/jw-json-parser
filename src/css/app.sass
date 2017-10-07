@@ -10,7 +10,8 @@ section
   height: calc(100% - 40px)
   display: flex
   flex-direction: row
-  justify-contents: flex-start
+  justify-content: space-between
+  
 
 span.hide, div.hide
   span.toggle-end
@@ -23,14 +24,18 @@ span.hide, div.hide
   ul, ol
     display: none
 
+
 textarea, #root
-  width: 50%
+  width: 100%
   height: 100%
   font-size: 14px
   padding: 40px
   border: 1px solid #ccc
   outline: none
   border-top: 0px;
+
+textarea
+  max-width: 557px;
   
 #root
   padding: 40px
