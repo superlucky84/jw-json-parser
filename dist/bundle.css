@@ -60,6 +60,8 @@ textarea {
   #root span.string {
     padding-left: 5px;
     color: #4e9a06; }
+  #root span.toggle-wrap {
+    padding-left: 5px; }
 
 header {
   height: 40px;

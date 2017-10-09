@@ -91,7 +91,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 __webpack_require__(1);
 
-var _jquery = __webpack_require__(6);
+var _jquery = __webpack_require__(2);
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
@@ -109,12 +109,20 @@ var Parser = exports.Parser = function () {
     var $root = (0, _jquery2.default)("#root");
 
     TEXTAREA.addEventListener("keyup", function (event) {
-      resultHTML = _this.itemParse(_this.encodeSplitCharactor(event.target.value));
-      $root.html(resultHTML ? resultHTML : "Invalid JSON");
+      try {
+        resultHTML = _this.itemParse(JSON.parse(_this.trim(event.target.value)));
+        $root.html(resultHTML ? resultHTML : "Invalid JSON");
+      } catch (exception) {
+        $root.html(exception);
+      }
     });
 
-    resultHTML = this.itemParse(this.encodeSplitCharactor(TEXTAREA.value));
-    $root.html(resultHTML ? resultHTML : "Invalid JSON");
+    try {
+      resultHTML = this.itemParse(JSON.parse(this.trim(TEXTAREA.value)));
+      $root.html(resultHTML ? resultHTML : "Invalid JSON");
+    } catch (exception) {
+      $root.html(exception);
+    }
 
     $root.bind('click', function (event) {
       var target = event.target;
@@ -130,162 +138,61 @@ var Parser = exports.Parser = function () {
   }
 
   _createClass(Parser, [{
-    key: 'searchMatchFlag',
-    value: function searchMatchFlag(text, serarchPoint) {
-      if (!text) {
-        return;
-      }
-
-      var matchFlag = null;
-      if (serarchPoint === "start") {
-        matchFlag = text.match(/^(\{|\[)/);
-      } else if (serarchPoint === "end") {
-        matchFlag = text.match(/(\}|\])$/);
-      }
-      if (matchFlag === null) {
-        return null;
-      }
-      return matchFlag[0];
-    }
-  }, {
-    key: 'compareMatchFlag',
-    value: function compareMatchFlag(startFlag, endFlag) {
-      if (startFlag === "{" && endFlag !== "}") {
-        return true;
-      }
-      if (startFlag === "[" && endFlag !== "]") {
-        return true;
-      }
-      return false;
-    }
-  }, {
-    key: 'removeMatchFlagString',
-    value: function removeMatchFlagString(text) {
-
-      if (!text) return;
-
-      text = text.replace(/^(\{|\[)/, "");
-      text = text.replace(/(\}|\])$/, "");
-      return text;
-    }
-
-    // 키와 벨류를 분리함
-
-  }, {
-    key: 'separateKayValue',
-    value: function separateKayValue(item) {
-
-      var key = item.replace(/(.*?):(.*)/, "$1");
-      var value = item.replace(/(.*?):(.*)/, "$2");
-
-      var keyValueArr = item.match(/(.*?):(.*)/);
-      if (keyValueArr) {
-        return [keyValueArr[1], keyValueArr[2]];
-      }
-      return [];
-    }
-  }, {
-    key: 'objectItemSplit',
-    value: function objectItemSplit(text) {
-      var splitArr = text.split(",");
-      var newsplitArr = [];
-      var serarchPoint = [];
-      var match = null;
-      var closeMatch = null;
-      splitArr.forEach(function (item) {
-        var matchStart = false;
-        if (match === null) {
-          match = item.match(/(\{|\[)/);
-          if (match) {
-            match = match[0];
-            closeMatch = match == "{" ? "}" : "]";
-            matchStart = true;
-          }
-        }
-        var matchArr = item.match(new RegExp("\\" + match, "g"));
-        var closeMatchArr = item.match(new RegExp("\\" + closeMatch, "g"));
-        // 플래그 매칭
-        if (matchArr) {
-          serarchPoint = serarchPoint.concat(matchArr);
-        }
-        if ((matchStart === true || serarchPoint.length === 0) && item) {
-          newsplitArr.push(item);
-        } else if (serarchPoint.length > 0) {
-          var newSplitLastIdx = newsplitArr.length - 1;
-          newsplitArr[newSplitLastIdx] = newsplitArr[newSplitLastIdx] + ',' + item;
-        }
-        if (serarchPoint.length > 0 && closeMatchArr) {
-          serarchPoint.splice(0, closeMatchArr.length);
-          if (serarchPoint.length === 0) {
-            match = null;
-          }
-        }
-      });
-      return newsplitArr;
-    }
-  }, {
     key: 'objectParse',
-    value: function objectParse(text, analisysArr) {
+    value: function objectParse(textObject, analisysArr) {
       var _this2 = this;
 
-      var splitArr = this.objectItemSplit(text);
-      splitArr.forEach(function (item, idx) {
-
-        var keyValue = _this2.separateKayValue(item);
-        if (keyValue.length > 0) {
-          var startMatchFlag = _this2.searchMatchFlag(_this2.trim(keyValue[1]), "start");
-          if (startMatchFlag) {
-            keyValue[1] = _this2.itemParse(keyValue[1]);
-          }
-          var comma = idx < splitArr.length - 1 ? "," : "";
-          analisysArr.push("<li>");
-          analisysArr.push(_this2.surroundTag(_this2.trim(keyValue[0]), "property"));
-          analisysArr.push(":");
-          analisysArr.push(_this2.surroundTag(keyValue[1]) + comma);
-          analisysArr.push("</li>");
+      var objectKeys = Object.keys(textObject);
+      objectKeys.forEach(function (item, idx) {
+        var value = textObject[item];
+        if (value === null) value = "null";
+        if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === "object") {
+          value = _this2.surroundTag(_this2.itemParse(value), "toggle-wrap");
+        } else {
+          value = _this2.surroundTag(value);
         }
+        var comma = idx < objectKeys.length - 1 ? "," : "";
+        analisysArr.push("<li>");
+        analisysArr.push(_this2.surroundTag(item, "property"));
+        analisysArr.push(":");
+        analisysArr.push(value + comma);
+        analisysArr.push("</li>");
       });
-      return splitArr.length;
+      return objectKeys.length;
     }
   }, {
     key: 'arrayParse',
-    value: function arrayParse(text, analisysArr) {
+    value: function arrayParse(textArray, analisysArr) {
       var _this3 = this;
 
-      var splitArr = this.objectItemSplit(text);
-      splitArr.forEach(function (item, idx) {
-        var startMatchFlag = _this3.searchMatchFlag(_this3.trim(item), "start");
-        if (startMatchFlag) {
-          item = _this3.itemParse(item);
+      textArray.forEach(function (item, idx) {
+        if ((typeof item === 'undefined' ? 'undefined' : _typeof(item)) === "object") {
+          item = _this3.surroundTag(_this3.itemParse(item), "toggle-wrap");
+        } else {
+          item = _this3.surroundTag(item);
         }
-        var comma = idx < splitArr.length - 1 ? "," : "";
+        var comma = idx < textArray.length - 1 ? "," : "";
         analisysArr.push("<li>");
-        analisysArr.push(_this3.surroundTag(item) + comma);
+        analisysArr.push(item + comma);
         analisysArr.push("</li>");
       });
-      return splitArr.length;
+      return textArray.length;
     }
   }, {
     key: 'itemParse',
     value: function itemParse(original) {
+
       var analisysArr = [];
-      var text = this.trim(original);
-      var startMatchFlag = this.searchMatchFlag(text, "start");
-      var endMatchFlag = this.searchMatchFlag(text, "end");
-      if (this.compareMatchFlag(startMatchFlag, endMatchFlag)) {
-        return;
-      }
-      text = this.removeMatchFlagString(text);
-      if (startMatchFlag === "{") {
+      if (original.constructor === Object) {
         analisysArr.push(this.surroundTag("{", "toggle"));
         analisysArr.push("<ul>");
-        var objectLength = this.objectParse(text, analisysArr);
+        var objectLength = this.objectParse(original, analisysArr);
         analisysArr.push("</ul>");
         analisysArr.push(this.surroundTag("}", "toggle-end", objectLength));
-      } else if (startMatchFlag === "[") {
+      } else if (original.constructor === Array) {
         analisysArr.push(this.surroundTag("[", "toggle"));
         analisysArr.push("<ol>");
-        var arrayLength = this.arrayParse(text, analisysArr);
+        var arrayLength = this.arrayParse(original, analisysArr);
         analisysArr.push("</ol>");
         analisysArr.push(this.surroundTag("]", "toggle-end", arrayLength));
       }
@@ -303,31 +210,12 @@ var Parser = exports.Parser = function () {
         return item;
       }
       if (!type) {
-        type = item.match(/^"|^'/) ? "string" : "number";
+        type = typeof item === "string" ? "string" : "number";
       }
-
       if (type === "string" || type === "property") {
-        item = this.decodeSplitCharactor(item);
+        item = '"' + item + '"';
       }
-
       return '<span class="' + type + '" ' + count + '>' + item + '</span>';
-    }
-  }, {
-    key: 'encodeSplitCharactor',
-    value: function encodeSplitCharactor(tvalue) {
-      var tvalueArr = tvalue.match(/(\")([^"]*?)(\")/g);
-      if (!tvalueArr) {
-        return tvalue;
-      }
-      tvalueArr.forEach(function (sItem) {
-        tvalue = tvalue.replace(sItem, sItem.replace(/,/g, "ឦ"));
-      });
-      return tvalue;
-    }
-  }, {
-    key: 'decodeSplitCharactor',
-    value: function decodeSplitCharactor(tvalue) {
-      return tvalue.replace(/ឦ/g, ",");
     }
   }, {
     key: 'trim',
@@ -348,11 +236,7 @@ var Parser = exports.Parser = function () {
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 2 */,
-/* 3 */,
-/* 4 */,
-/* 5 */,
-/* 6 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
