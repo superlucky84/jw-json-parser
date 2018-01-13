@@ -4,8 +4,10 @@ import $ from 'jquery'
 export class Parser {
   constructor(TEXTAREA) {
 
+     
     let resultHTML = null;
     let $root = $("#root");
+    let as = "jinwoo";
 
     TEXTAREA.addEventListener("keyup", (event) => {
       resultHTML = this.itemParse(this.encodeSplitCharactor(event.target.value));
