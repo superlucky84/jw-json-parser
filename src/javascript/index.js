@@ -38,8 +38,6 @@ export class Parser {
   }
 
   objectParse(textObject, analisysArr) {
-    console.log ('aa');
-
     let objectKeys = Object.keys(textObject);
     objectKeys.forEach((item, idx) => {
       let value = textObject[item];
